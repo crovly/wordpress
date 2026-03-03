@@ -6,9 +6,12 @@
  * Version: 1.0.0
  * Author: Crovly
  * Author URI: https://crovly.com
- * License: MIT
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: crovly
+ * Domain Path: /languages
  * Requires at least: 5.8
+ * Tested up to: 6.7
  * Requires PHP: 7.4
  */
 
@@ -36,13 +39,24 @@ class Crovly_Plugin {
     }
 
     private function __construct() {
-        $this->site_key = get_option('crovly_site_key', '');
-        $this->secret_key = get_option('crovly_secret_key', '');
+        $this->site_key = defined('CROVLY_SITE_KEY') ? CROVLY_SITE_KEY : get_option('crovly_site_key', '');
+        $this->secret_key = defined('CROVLY_SECRET_KEY') ? CROVLY_SECRET_KEY : get_option('crovly_secret_key', '');
+
+        // i18n
+        add_action('init', function () {
+            load_plugin_textdomain('crovly', false, dirname(plugin_basename(__FILE__)) . '/languages');
+        });
 
         // Admin
         add_action('admin_menu', [$this, 'add_settings_page']);
         add_action('admin_init', [$this, 'register_settings']);
         add_filter('plugin_action_links_' . plugin_basename(__FILE__), [$this, 'add_settings_link']);
+        add_action('admin_init', [$this, 'activation_redirect']);
+        add_action('admin_notices', [$this, 'admin_notice_keys']);
+        add_action('wp_ajax_crovly_test_connection', [$this, 'ajax_test_connection']);
+
+        // Cloudflare Rocket Loader compat
+        add_filter('script_loader_tag', [$this, 'add_cfasync_attr'], 10, 2);
 
         // Shortcode & PHP function
         add_shortcode('crovly', [$this, 'shortcode_widget']);
@@ -104,6 +118,7 @@ class Crovly_Plugin {
     }
 
     public function get_widget_html($extra_attrs = '') {
+        $this->enqueue_widget();
         $this->widget_counter++;
         $id = 'crovly-captcha-' . $this->widget_counter;
         $theme = get_option('crovly_theme', 'auto');
@@ -124,6 +139,7 @@ class Crovly_Plugin {
     // ═══════════════════════════════════════
 
     public function verify_token() {
+        if (defined('CROVLY_DISABLE') && CROVLY_DISABLE) return true;
         if ($this->should_skip()) return true;
 
         $token = isset($_POST['crovly-token']) ? sanitize_text_field(wp_unslash($_POST['crovly-token'])) : '';
@@ -168,6 +184,77 @@ class Crovly_Plugin {
         return $msg ?: __('Captcha verification failed. Please try again.', 'crovly');
     }
 
+    public function activation_redirect() {
+        if (get_transient('crovly_activation_redirect')) {
+            delete_transient('crovly_activation_redirect');
+            if (!isset($_GET['activate-multi'])) {
+                wp_safe_redirect(admin_url('options-general.php?page=crovly'));
+                exit;
+            }
+        }
+    }
+
+    public function admin_notice_keys() {
+        if (!current_user_can('manage_options')) return;
+        if (!empty($this->site_key) && !empty($this->secret_key)) return;
+        $url = admin_url('options-general.php?page=crovly');
+        echo '<div class="notice notice-warning"><p>' . sprintf(
+            wp_kses(
+                /* translators: %s: settings page URL */
+                __('<strong>Crovly</strong> needs your API keys to protect forms. <a href="%s">Configure now</a>.', 'crovly'),
+                ['strong' => [], 'a' => ['href' => []]]
+            ),
+            esc_url($url)
+        ) . '</p></div>';
+    }
+
+    public function add_cfasync_attr($tag, $handle) {
+        if ($handle === 'crovly-widget') {
+            $tag = str_replace('<script ', '<script data-cfasync="false" ', $tag);
+        }
+        return $tag;
+    }
+
+    public function ajax_test_connection() {
+        check_ajax_referer('crovly_test_connection', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('Unauthorized.', 'crovly')]);
+        }
+
+        $site_key = defined('CROVLY_SITE_KEY') ? CROVLY_SITE_KEY : get_option('crovly_site_key', '');
+        $secret_key = defined('CROVLY_SECRET_KEY') ? CROVLY_SECRET_KEY : get_option('crovly_secret_key', '');
+
+        if (empty($site_key) || empty($secret_key)) {
+            wp_send_json_error(['message' => __('Please enter both Site Key and Secret Key.', 'crovly')]);
+        }
+
+        $response = wp_remote_post('https://api.crovly.com/verify-token', [
+            'timeout' => 10,
+            'headers' => [
+                'Authorization' => 'Bearer ' . $secret_key,
+                'Content-Type'  => 'application/json',
+            ],
+            'body' => wp_json_encode(['token' => 'test_connection']),
+        ]);
+
+        if (is_wp_error($response)) {
+            wp_send_json_error(['message' => __('Could not reach Crovly API.', 'crovly') . ' ' . $response->get_error_message()]);
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+
+        if ($code === 401) {
+            wp_send_json_error(['message' => __('Invalid Secret Key. Please check your credentials.', 'crovly')]);
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        if (is_array($body)) {
+            wp_send_json_success(['message' => __('Connection successful! API is reachable and keys are valid.', 'crovly')]);
+        }
+
+        wp_send_json_error(['message' => __('Unexpected API response.', 'crovly')]);
+    }
+
     // ═══════════════════════════════════════
     //  WordPress Core
     // ═══════════════════════════════════════
@@ -194,6 +281,10 @@ class Crovly_Plugin {
             add_action('comment_form_logged_in_after', [$this, 'render_widget']);
             add_filter('preprocess_comment', [$this, 'wp_verify_comment']);
         }
+        if (is_multisite()) {
+            add_action('signup_extra_fields', [$this, 'render_widget']);
+            add_filter('wpmu_validate_user_signup', [$this, 'ms_verify_signup']);
+        }
     }
 
     public function wp_verify_login($user, $password) {
@@ -216,6 +307,13 @@ class Crovly_Plugin {
             wp_die(esc_html($this->fail_error()), esc_html__('Crovly Verification Failed', 'crovly'), ['response' => 403, 'back_link' => true]);
         }
         return $commentdata;
+    }
+
+    public function ms_verify_signup($result) {
+        if (!$this->verify_token()) {
+            $result['errors']->add('crovly_failed', $this->fail_error());
+        }
+        return $result;
     }
 
     // ═══════════════════════════════════════
@@ -361,7 +459,6 @@ class Crovly_Plugin {
 
     private function init_fluent_forms() {
         if (!$this->is_enabled('fluentforms') || !defined('FLUENTFORM_VERSION')) return;
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_widget']);
         add_action('fluentform_render_item_submit_button', [$this, 'ff_render'], 10, 2);
         add_filter('fluentform_validate_input', [$this, 'ff_verify'], 10, 5);
     }
@@ -371,6 +468,7 @@ class Crovly_Plugin {
     public function ff_verify($errorMessage, $field, $formData, $fields, $form) {
         static $checked = null;
         if ($checked === null) $checked = $this->verify_token();
+        if (!$checked) return $this->fail_error();
         return $errorMessage;
     }
 
@@ -380,7 +478,6 @@ class Crovly_Plugin {
 
     private function init_formidable() {
         if (!$this->is_enabled('formidable') || !class_exists('FrmForm')) return;
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_widget']);
         add_filter('frm_submit_button_html', [$this, 'formidable_inject'], 10, 2);
         add_filter('frm_validate_entry', [$this, 'formidable_verify'], 20, 2);
     }
@@ -398,7 +495,6 @@ class Crovly_Plugin {
 
     private function init_forminator() {
         if (!$this->is_enabled('forminator') || !class_exists('Forminator')) return;
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_widget']);
         add_filter('forminator_custom_form_submit_before_set_fields', [$this, 'forminator_verify'], 10, 3);
         add_action('forminator_before_form_render', [$this, 'forminator_before']);
         add_action('forminator_after_form_render', [$this, 'forminator_after']);
@@ -430,7 +526,6 @@ class Crovly_Plugin {
 
     private function init_jetpack() {
         if (!$this->is_enabled('jetpack') || !defined('JETPACK__VERSION')) return;
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_widget']);
         add_filter('jetpack_contact_form_html', [$this, 'jetpack_inject']);
         add_filter('jetpack_contact_form_is_spam', [$this, 'jetpack_verify'], 20, 2);
     }
@@ -452,7 +547,6 @@ class Crovly_Plugin {
     private function init_divi() {
         if (!$this->is_enabled('divi')) return;
         if (!defined('ET_BUILDER_VERSION') && !function_exists('et_setup_theme')) return;
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_widget']);
         add_filter('et_pb_contact_form_submit_button', [$this, 'divi_inject']);
         add_filter('et_pb_contact_form_valid', [$this, 'divi_verify']);
         // Divi login form
@@ -488,7 +582,6 @@ class Crovly_Plugin {
 
     private function init_bbpress() {
         if (!$this->is_enabled('bbpress') || !class_exists('bbPress')) return;
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_widget']);
         add_action('bbp_theme_before_topic_form_submit_wrapper', [$this, 'render_widget']);
         add_action('bbp_theme_before_reply_form_submit_wrapper', [$this, 'render_widget']);
         add_action('bbp_new_topic_pre_extras', [$this, 'bbp_verify']);
@@ -505,7 +598,6 @@ class Crovly_Plugin {
 
     private function init_ultimate_member() {
         if (!$this->is_enabled('ultimatemember') || !class_exists('UM')) return;
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_widget']);
         add_action('um_after_login_fields', [$this, 'render_widget']);
         add_action('um_after_register_fields', [$this, 'render_widget']);
         add_action('um_after_password_reset_fields', [$this, 'render_widget']);
@@ -525,7 +617,6 @@ class Crovly_Plugin {
 
     private function init_memberpress() {
         if (!$this->is_enabled('memberpress') || !defined('MEPR_VERSION')) return;
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_widget']);
         add_action('mepr-checkout-before-submit', [$this, 'render_widget']);
         add_action('mepr-login-form-before-submit', [$this, 'render_widget']);
         add_filter('mepr-validate-signup', [$this, 'mepr_verify']);
@@ -543,7 +634,6 @@ class Crovly_Plugin {
 
     private function init_paid_memberships_pro() {
         if (!$this->is_enabled('pmpro') || !defined('PMPRO_VERSION')) return;
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_widget']);
         add_action('pmpro_checkout_before_submit_button', [$this, 'render_widget']);
         add_filter('pmpro_registration_checks', [$this, 'pmpro_verify']);
     }
@@ -562,7 +652,6 @@ class Crovly_Plugin {
 
     private function init_edd() {
         if (!$this->is_enabled('edd') || !class_exists('Easy_Digital_Downloads')) return;
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_widget']);
         add_action('edd_purchase_form_before_submit', [$this, 'render_widget']);
         add_action('edd_register_form_fields_before_submit', [$this, 'render_widget']);
         add_action('edd_login_fields_after', [$this, 'render_widget']);
@@ -579,7 +668,6 @@ class Crovly_Plugin {
 
     private function init_mailchimp() {
         if (!$this->is_enabled('mc4wp') || !defined('MC4WP_VERSION')) return;
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_widget']);
         add_filter('mc4wp_form_content', [$this, 'mc4wp_inject']);
         add_filter('mc4wp_valid_form_request', [$this, 'mc4wp_verify'], 10, 2);
     }
@@ -604,7 +692,6 @@ class Crovly_Plugin {
 
     private function init_givewp() {
         if (!$this->is_enabled('givewp') || !class_exists('Give')) return;
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_widget']);
         add_action('give_donation_form_before_submit', [$this, 'render_widget']);
         add_action('give_checkout_error_checks', [$this, 'givewp_verify'], 10, 2);
     }
@@ -619,7 +706,6 @@ class Crovly_Plugin {
 
     private function init_wpdiscuz() {
         if (!$this->is_enabled('wpdiscuz') || !class_exists('WpdiscuzCore')) return;
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_widget']);
         add_action('wpdiscuz_comment_form_footer', [$this, 'render_widget']);
         add_filter('wpdiscuz_before_save_comment', [$this, 'wpdiscuz_verify']);
     }
@@ -637,7 +723,6 @@ class Crovly_Plugin {
 
     private function init_wpforo() {
         if (!$this->is_enabled('wpforo') || !function_exists('WPF')) return;
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_widget']);
         add_action('wpforo_topic_form_buttons_hook', [$this, 'render_widget']);
         add_action('wpforo_reply_form_buttons_hook', [$this, 'render_widget']);
         add_filter('wpforo_before_add_topic', [$this, 'wpforo_verify']);
@@ -784,13 +869,18 @@ class Crovly_Plugin {
                 return is_array($value) ? array_map('sanitize_text_field', $value) : [];
             }
         ]);
+        register_setting('crovly_settings', 'crovly_delete_data', [
+            'sanitize_callback' => function ($value) {
+                return $value ? '1' : '0';
+            }
+        ]);
     }
 
     public function render_settings_page() {
         if (!current_user_can('manage_options')) return;
 
-        $site_key = get_option('crovly_site_key', '');
-        $secret_key = get_option('crovly_secret_key', '');
+        $site_key = defined('CROVLY_SITE_KEY') ? CROVLY_SITE_KEY : get_option('crovly_site_key', '');
+        $secret_key = defined('CROVLY_SECRET_KEY') ? CROVLY_SECRET_KEY : get_option('crovly_secret_key', '');
         $theme = get_option('crovly_theme', 'auto');
         $error_msg = get_option('crovly_error_message', '');
         $skip = get_option('crovly_skip_logged_in', 'none');
@@ -813,11 +903,21 @@ class Crovly_Plugin {
                 <table class="form-table">
                     <tr>
                         <th><label for="crovly_site_key"><?php esc_html_e('Site Key', 'crovly'); ?></label></th>
-                        <td><input type="text" id="crovly_site_key" name="crovly_site_key" value="<?php echo esc_attr($site_key); ?>" class="regular-text" placeholder="crvl_site_..." /></td>
+                        <td><input type="text" id="crovly_site_key" name="crovly_site_key" value="<?php echo esc_attr($site_key); ?>" class="regular-text" placeholder="crvl_site_..." <?php if (defined('CROVLY_SITE_KEY') || defined('CROVLY_SECRET_KEY')) echo 'readonly'; ?> /></td>
                     </tr>
                     <tr>
                         <th><label for="crovly_secret_key"><?php esc_html_e('Secret Key', 'crovly'); ?></label></th>
-                        <td><input type="password" id="crovly_secret_key" name="crovly_secret_key" value="<?php echo esc_attr($secret_key); ?>" class="regular-text" placeholder="crvl_secret_..." /></td>
+                        <td><input type="password" id="crovly_secret_key" name="crovly_secret_key" value="<?php echo esc_attr($secret_key); ?>" class="regular-text" placeholder="crvl_secret_..." <?php if (defined('CROVLY_SITE_KEY') || defined('CROVLY_SECRET_KEY')) echo 'readonly'; ?> /></td>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <td>
+                            <?php if (defined('CROVLY_SITE_KEY') || defined('CROVLY_SECRET_KEY')) : ?>
+                                <p class="description" style="color:#2271b1;margin-bottom:8px"><?php esc_html_e('Keys are defined in wp-config.php and cannot be changed here.', 'crovly'); ?></p>
+                            <?php endif; ?>
+                            <button type="button" id="crovly-test-btn" class="button button-secondary"><?php esc_html_e('Test Connection', 'crovly'); ?></button>
+                            <span id="crovly-test-result" style="margin-left:10px;font-weight:500"></span>
+                        </td>
                     </tr>
                 </table>
 
@@ -881,6 +981,15 @@ class Crovly_Plugin {
                             <p class="description"><?php esc_html_e('One IP per line. These IPs skip captcha verification.', 'crovly'); ?></p>
                         </td>
                     </tr>
+                    <tr>
+                        <th><?php esc_html_e('Delete data on uninstall', 'crovly'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="crovly_delete_data" value="1" <?php checked(get_option('crovly_delete_data', '0'), '1'); ?> />
+                                <?php esc_html_e('Remove all Crovly settings when the plugin is deleted. Does not apply to deactivation.', 'crovly'); ?>
+                            </label>
+                        </td>
+                    </tr>
                 </table>
 
                 <h2><?php esc_html_e('Shortcode & PHP', 'crovly'); ?></h2>
@@ -899,10 +1008,42 @@ class Crovly_Plugin {
                             <code>&lt;?php Crovly_Plugin::instance()-&gt;verify_token(); // returns bool ?&gt;</code>
                         </td>
                     </tr>
+                    <tr>
+                        <th><?php esc_html_e('wp-config.php', 'crovly'); ?></th>
+                        <td>
+                            <code>define('CROVLY_SITE_KEY', 'crvl_site_...');</code><br>
+                            <code>define('CROVLY_SECRET_KEY', 'crvl_secret_...');</code><br>
+                            <code>define('CROVLY_DISABLE', true);</code> &mdash; <small><?php esc_html_e('emergency bypass', 'crovly'); ?></small>
+                            <p class="description"><?php esc_html_e('Constants override database settings. Use CROVLY_DISABLE to bypass all verification (e.g. lockout recovery).', 'crovly'); ?></p>
+                        </td>
+                    </tr>
                 </table>
 
                 <?php submit_button(); ?>
             </form>
+            <script>
+            document.getElementById('crovly-test-btn').addEventListener('click', function() {
+                var btn = this, res = document.getElementById('crovly-test-result');
+                btn.disabled = true;
+                res.textContent = '<?php echo esc_js(__('Testing...', 'crovly')); ?>';
+                res.style.color = '#666';
+                var fd = new FormData();
+                fd.append('action', 'crovly_test_connection');
+                fd.append('nonce', '<?php echo esc_js(wp_create_nonce('crovly_test_connection')); ?>');
+                fetch(ajaxurl, {method:'POST', body:fd})
+                    .then(function(r){return r.json()})
+                    .then(function(r){
+                        res.textContent = r.data.message;
+                        res.style.color = r.success ? '#00a32a' : '#d63638';
+                        btn.disabled = false;
+                    })
+                    .catch(function(){
+                        res.textContent = '<?php echo esc_js(__('Request failed.', 'crovly')); ?>';
+                        res.style.color = '#d63638';
+                        btn.disabled = false;
+                    });
+            });
+            </script>
         </div>
         <?php
     }
@@ -916,6 +1057,18 @@ function crovly_render() {
 function crovly_verify() {
     return Crovly_Plugin::instance()->verify_token();
 }
+
+// WooCommerce HPOS compatibility
+add_action('before_woocommerce_init', function () {
+    if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
+    }
+});
+
+// Activation
+register_activation_hook(__FILE__, function () {
+    set_transient('crovly_activation_redirect', true, 30);
+});
 
 // Initialize
 Crovly_Plugin::instance();
