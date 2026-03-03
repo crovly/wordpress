@@ -1,0 +1,275 @@
+# Copyright (C) 2026 Crovly
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Crovly 1.0.0\n"
+"Report-Msgid-Bugs-To: https://crovly.com/support\n"
+"POT-Creation-Date: 2026-03-03 00:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: crovly.php
+msgid "Captcha verification failed. Please try again."
+msgstr ""
+
+#: crovly.php
+msgid "Crovly Verification Failed"
+msgstr ""
+
+#: crovly.php
+msgid "Error:"
+msgstr ""
+
+#: crovly.php
+msgid "Crovly Captcha"
+msgstr ""
+
+#: crovly.php
+msgid "Crovly Settings"
+msgstr ""
+
+#: crovly.php
+msgid "Crovly"
+msgstr ""
+
+#: crovly.php
+msgid "Settings"
+msgstr ""
+
+#: crovly.php
+msgid "Privacy-first captcha powered by Proof of Work. Get your keys at <a href=\"https://app.crovly.com\" target=\"_blank\">app.crovly.com</a>."
+msgstr ""
+
+#: crovly.php
+msgid "API Keys"
+msgstr ""
+
+#: crovly.php
+msgid "Site Key"
+msgstr ""
+
+#: crovly.php
+msgid "Secret Key"
+msgstr ""
+
+#: crovly.php
+msgid "Appearance"
+msgstr ""
+
+#: crovly.php
+msgid "Theme"
+msgstr ""
+
+#: crovly.php
+msgid "Auto (match system)"
+msgstr ""
+
+#: crovly.php
+msgid "Light"
+msgstr ""
+
+#: crovly.php
+msgid "Dark"
+msgstr ""
+
+#: crovly.php
+msgid "Error Message"
+msgstr ""
+
+#: crovly.php
+msgid "Leave blank for default message."
+msgstr ""
+
+#: crovly.php
+msgid "Protected Forms"
+msgstr ""
+
+#: crovly.php
+msgid "Only installed and active plugins are shown above."
+msgstr ""
+
+#: crovly.php
+msgid "Advanced"
+msgstr ""
+
+#: crovly.php
+msgid "Skip for Logged-in Users"
+msgstr ""
+
+#: crovly.php
+msgid "No — verify everyone"
+msgstr ""
+
+#: crovly.php
+msgid "Administrators only"
+msgstr ""
+
+#: crovly.php
+msgid "All logged-in users"
+msgstr ""
+
+#: crovly.php
+msgid "IP Allowlist"
+msgstr ""
+
+#: crovly.php
+msgid "One IP per line. These IPs skip captcha verification."
+msgstr ""
+
+#: crovly.php
+msgid "Delete data on uninstall"
+msgstr ""
+
+#: crovly.php
+msgid "Remove all Crovly settings when the plugin is deleted. Does not apply to deactivation."
+msgstr ""
+
+#: crovly.php
+msgid "Shortcode & PHP"
+msgstr ""
+
+#: crovly.php
+msgid "Shortcode"
+msgstr ""
+
+#: crovly.php
+msgid "Add to any page/post"
+msgstr ""
+
+#: crovly.php
+msgid "With theme override"
+msgstr ""
+
+#: crovly.php
+msgid "PHP Function"
+msgstr ""
+
+#: crovly.php
+msgid "WordPress"
+msgstr ""
+
+#: crovly.php
+msgid "Login"
+msgstr ""
+
+#: crovly.php
+msgid "Registration"
+msgstr ""
+
+#: crovly.php
+msgid "Lost Password"
+msgstr ""
+
+#: crovly.php
+msgid "Comments"
+msgstr ""
+
+#: crovly.php
+msgid "Checkout, Login, Register, Lost Password, Pay for Order"
+msgstr ""
+
+#: crovly.php
+msgid "All forms"
+msgstr ""
+
+#: crovly.php
+msgid "Contact forms"
+msgstr ""
+
+#: crovly.php
+msgid "Contact Form, Login"
+msgstr ""
+
+#: crovly.php
+msgid "Registration, Activity Post"
+msgstr ""
+
+#: crovly.php
+msgid "New Topic, Reply"
+msgstr ""
+
+#: crovly.php
+msgid "Login, Register, Password Reset"
+msgstr ""
+
+#: crovly.php
+msgid "Checkout, Login"
+msgstr ""
+
+#: crovly.php
+msgid "Checkout"
+msgstr ""
+
+#: crovly.php
+msgid "Checkout, Login, Register"
+msgstr ""
+
+#: crovly.php
+msgid "Signup forms"
+msgstr ""
+
+#: crovly.php
+msgid "Donation forms"
+msgstr ""
+
+#. translators: %s: settings page URL
+#: crovly.php
+msgid "<strong>Crovly</strong> needs your API keys to protect forms. <a href=\"%s\">Configure now</a>."
+msgstr ""
+
+#: crovly.php
+msgid "Unauthorized."
+msgstr ""
+
+#: crovly.php
+msgid "Please enter both Site Key and Secret Key."
+msgstr ""
+
+#: crovly.php
+msgid "Could not reach Crovly API."
+msgstr ""
+
+#: crovly.php
+msgid "Invalid Secret Key. Please check your credentials."
+msgstr ""
+
+#: crovly.php
+msgid "Connection successful! API is reachable and keys are valid."
+msgstr ""
+
+#: crovly.php
+msgid "Unexpected API response."
+msgstr ""
+
+#: crovly.php
+msgid "Keys are defined in wp-config.php and cannot be changed here."
+msgstr ""
+
+#: crovly.php
+msgid "Test Connection"
+msgstr ""
+
+#: crovly.php
+msgid "Testing..."
+msgstr ""
+
+#: crovly.php
+msgid "Request failed."
+msgstr ""
+
+#: crovly.php
+msgid "wp-config.php"
+msgstr ""
+
+#: crovly.php
+msgid "emergency bypass"
+msgstr ""
+
+#: crovly.php
+msgid "Constants override database settings. Use CROVLY_DISABLE to bypass all verification (e.g. lockout recovery)."
+msgstr ""
