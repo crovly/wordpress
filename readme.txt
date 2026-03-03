@@ -78,7 +78,7 @@ Sign up for a free account at [app.crovly.com](https://app.crovly.com). Create a
 
 = Is Crovly free? =
 
-Yes! The free plan includes unlimited verifications and unlimited sites. The Pro plan ($9/month) adds badge removal, 90-day analytics with export, and self-hosting.
+Yes! The free plan includes unlimited verifications and unlimited sites. The Pro plan ($9/month) adds badge removal, 30-day analytics with CSV export, webhooks, and custom difficulty.
 
 = Does Crovly use cookies? =
 

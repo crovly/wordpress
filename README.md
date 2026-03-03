@@ -85,4 +85,4 @@ if (!crovly_verify()) {
 
 ## License
 
-MIT
+GPLv2 or later

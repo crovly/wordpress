@@ -113,8 +113,10 @@ class Crovly_Plugin {
         $this->widget_loaded = true;
     }
 
+    private static $kses_allowed = ['div' => ['id' => [], 'class' => [], 'data-site-key' => [], 'data-theme' => [], 'style' => []]];
+
     public function render_widget() {
-        echo $this->get_widget_html();
+        echo wp_kses($this->get_widget_html(), self::$kses_allowed);
     }
 
     public function get_widget_html($extra_attrs = '') {
@@ -300,6 +302,7 @@ class Crovly_Plugin {
 
     public function wp_verify_lostpassword($errors) {
         if (!$this->verify_token()) $errors->add('crovly_failed', '<strong>' . __('Error:', 'crovly') . '</strong> ' . $this->fail_error());
+        return $errors;
     }
 
     public function wp_verify_comment($commentdata) {
@@ -328,6 +331,7 @@ class Crovly_Plugin {
         add_action('woocommerce_checkout_process', [$this, 'woo_verify']);
         // Login
         add_action('woocommerce_login_form', [$this, 'render_widget']);
+        add_filter('woocommerce_process_login_errors', [$this, 'woo_verify_login'], 10, 3);
         // Register
         add_action('woocommerce_register_form', [$this, 'render_widget']);
         add_filter('woocommerce_process_registration_errors', [$this, 'woo_verify_register'], 10, 4);
@@ -335,10 +339,16 @@ class Crovly_Plugin {
         add_action('woocommerce_lostpassword_form', [$this, 'render_widget']);
         // Pay for order
         add_action('woocommerce_pay_order_before_submit', [$this, 'render_widget']);
+        add_action('woocommerce_before_pay_action', [$this, 'woo_verify']);
     }
 
     public function woo_verify() {
         if (!$this->verify_token()) wc_add_notice($this->fail_error(), 'error');
+    }
+
+    public function woo_verify_login($validation_error, $username, $password) {
+        if (!$this->verify_token()) $validation_error->add('crovly_failed', $this->fail_error());
+        return $validation_error;
     }
 
     public function woo_verify_register($validation_error, $username, $password, $email) {
@@ -429,7 +439,7 @@ class Crovly_Plugin {
     }
 
     public function elementor_register($fields) { $fields['crovly'] = __('Crovly Captcha', 'crovly'); return $fields; }
-    public function elementor_render($item, $idx, $form) { echo $this->get_widget_html(); }
+    public function elementor_render($item, $idx, $form) { echo wp_kses($this->get_widget_html(), self::$kses_allowed); }
 
     public function elementor_verify($record, $handler) {
         if (!$this->verify_token()) $handler->add_error('crovly', $this->fail_error());
@@ -463,7 +473,7 @@ class Crovly_Plugin {
         add_filter('fluentform_validate_input', [$this, 'ff_verify'], 10, 5);
     }
 
-    public function ff_render($btn, $form) { echo $this->get_widget_html(); }
+    public function ff_render($btn, $form) { echo wp_kses($this->get_widget_html(), self::$kses_allowed); }
 
     public function ff_verify($errorMessage, $field, $formData, $fields, $form) {
         static $checked = null;
@@ -510,7 +520,7 @@ class Crovly_Plugin {
         } else {
             $html .= $widget;
         }
-        echo $html;
+        echo wp_kses_post($html);
     }
 
     public function forminator_verify($can_submit, $id, $data) {
@@ -660,6 +670,7 @@ class Crovly_Plugin {
 
     public function edd_verify($valid_data, $post) {
         if (!$this->verify_token()) edd_set_error('crovly_failed', $this->fail_error());
+        return $valid_data;
     }
 
     // ═══════════════════════════════════════
@@ -903,11 +914,11 @@ class Crovly_Plugin {
                 <table class="form-table">
                     <tr>
                         <th><label for="crovly_site_key"><?php esc_html_e('Site Key', 'crovly'); ?></label></th>
-                        <td><input type="text" id="crovly_site_key" name="crovly_site_key" value="<?php echo esc_attr($site_key); ?>" class="regular-text" placeholder="crvl_site_..." <?php if (defined('CROVLY_SITE_KEY') || defined('CROVLY_SECRET_KEY')) echo 'readonly'; ?> /></td>
+                        <td><input type="text" id="crovly_site_key" name="crovly_site_key" value="<?php echo esc_attr($site_key); ?>" class="regular-text" placeholder="crvl_site_..." <?php if (defined('CROVLY_SITE_KEY') || defined('CROVLY_SECRET_KEY')) echo esc_attr('readonly'); ?> /></td>
                     </tr>
                     <tr>
                         <th><label for="crovly_secret_key"><?php esc_html_e('Secret Key', 'crovly'); ?></label></th>
-                        <td><input type="password" id="crovly_secret_key" name="crovly_secret_key" value="<?php echo esc_attr($secret_key); ?>" class="regular-text" placeholder="crvl_secret_..." <?php if (defined('CROVLY_SITE_KEY') || defined('CROVLY_SECRET_KEY')) echo 'readonly'; ?> /></td>
+                        <td><input type="password" id="crovly_secret_key" name="crovly_secret_key" value="<?php echo esc_attr($secret_key); ?>" class="regular-text" placeholder="crvl_secret_..." <?php if (defined('CROVLY_SITE_KEY') || defined('CROVLY_SECRET_KEY')) echo esc_attr('readonly'); ?> /></td>
                     </tr>
                     <tr>
                         <th></th>
