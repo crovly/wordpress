@@ -3,7 +3,7 @@
  * Plugin Name: Crovly
  * Plugin URI: https://crovly.com
  * Description: Privacy-first, Proof of Work captcha for WordPress. 30+ integrations: login, registration, comments, Contact Form 7, WPForms, Gravity Forms, Elementor, Ninja Forms, Fluent Forms, Formidable, Forminator, WooCommerce, BuddyPress, bbPress, Ultimate Member, MemberPress, Divi, Easy Digital Downloads, Mailchimp, GiveWP, and more. All free — no premium gating.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Crovly
  * Author URI: https://crovly.com
  * License: GPLv2 or later
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('CROVLY_VERSION', '1.0.1');
+define('CROVLY_VERSION', '1.0.2');
 define('CROVLY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CROVLY_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -113,7 +113,7 @@ class Crovly_Plugin {
         $this->widget_loaded = true;
     }
 
-    private static $kses_allowed = ['div' => ['id' => [], 'class' => [], 'data-site-key' => [], 'data-theme' => [], 'style' => []]];
+    private static $kses_allowed = ['div' => ['id' => [], 'class' => [], 'data-site-key' => [], 'data-theme' => [], 'data-fallback' => [], 'style' => []]];
 
     public function render_widget() {
         echo wp_kses($this->get_widget_html(), self::$kses_allowed);
@@ -126,7 +126,7 @@ class Crovly_Plugin {
         $theme = get_option('crovly_theme', 'auto');
         // Sanitize extra_attrs: strip tags and only allow safe attribute patterns
         $safe_extra = $extra_attrs ? ' ' . wp_kses_no_null(wp_strip_all_tags($extra_attrs)) : '';
-        return '<div id="' . esc_attr($id) . '" class="crovly-captcha" data-site-key="' . esc_attr($this->site_key) . '" data-theme="' . esc_attr($theme) . '"' . $safe_extra . ' style="margin:10px 0"></div>';
+        return '<div id="' . esc_attr($id) . '" class="crovly-captcha" data-site-key="' . esc_attr($this->site_key) . '" data-theme="' . esc_attr($theme) . '" data-fallback="open"' . $safe_extra . ' style="margin:10px 0"></div>';
     }
 
     public function shortcode_widget($atts) {
@@ -135,7 +135,7 @@ class Crovly_Plugin {
         $this->widget_counter++;
         $id = 'crovly-captcha-' . $this->widget_counter;
         $theme = $atts['theme'] ?: get_option('crovly_theme', 'auto');
-        return '<div id="' . esc_attr($id) . '" class="crovly-captcha" data-site-key="' . esc_attr($this->site_key) . '" data-theme="' . esc_attr($theme) . '" style="margin:10px 0"></div>';
+        return '<div id="' . esc_attr($id) . '" class="crovly-captcha" data-site-key="' . esc_attr($this->site_key) . '" data-theme="' . esc_attr($theme) . '" data-fallback="open" style="margin:10px 0"></div>';
     }
 
     // ═══════════════════════════════════════
