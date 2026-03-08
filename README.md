@@ -79,7 +79,7 @@ if (!crovly_verify()) {
 
 ## Links
 
-- [Documentation](https://docs.crovly.com/guides/wordpress)
+- [Documentation](https://docs.crovly.com/platforms/wordpress)
 - [Dashboard](https://app.crovly.com)
 - [Website](https://crovly.com)
 

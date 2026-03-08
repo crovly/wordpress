@@ -29,7 +29,7 @@ Crovly is a privacy-first captcha service powered by Proof of Work. Unlike tradi
 * **IP binding** — Tokens are bound to the solver's IP, preventing human farms
 * **Adaptive difficulty** — Suspicious visitors get harder challenges
 * **22+ integrations** — Works with all major WordPress plugins out of the box
-* **Lightweight** — Widget is under 10KB gzipped, zero dependencies
+* **Lightweight** — Widget is under 25KB gzipped, zero dependencies, 42 languages
 
 **Supported integrations:**
 
