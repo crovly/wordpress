@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Crovly
  * Plugin URI: https://crovly.com
- * Description: Privacy-first, Proof of Work captcha for WordPress. 30+ integrations: login, registration, comments, Contact Form 7, WPForms, Gravity Forms, Elementor, Ninja Forms, Fluent Forms, Formidable, Forminator, WooCommerce, BuddyPress, bbPress, Ultimate Member, MemberPress, Divi, Easy Digital Downloads, Mailchimp, GiveWP, and more. All free — no premium gating.
- * Version: 1.0.2
+ * Description: Privacy-first, Proof of Work captcha for WordPress. 22+ integrations: login, registration, comments, Contact Form 7, WPForms, Gravity Forms, Elementor, Ninja Forms, Fluent Forms, Formidable, Forminator, WooCommerce, BuddyPress, bbPress, Ultimate Member, MemberPress, Divi, Easy Digital Downloads, Mailchimp, GiveWP, and more. All free — no premium gating.
+ * Version: 1.0.3
  * Author: Crovly
  * Author URI: https://crovly.com
  * License: GPLv2 or later
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('CROVLY_VERSION', '1.0.2');
+define('CROVLY_VERSION', '1.0.3');
 define('CROVLY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CROVLY_PLUGIN_URL', plugin_dir_url(__FILE__));
 
