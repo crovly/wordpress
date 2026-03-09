@@ -78,7 +78,7 @@ Sign up for a free account at [app.crovly.com](https://app.crovly.com). Create a
 
 = Is Crovly free? =
 
-Yes! The free plan includes unlimited verifications and unlimited sites. The Pro plan ($9/month) adds badge removal, 30-day analytics with CSV export, webhooks, and custom difficulty.
+Yes! The free plan includes unlimited verifications and unlimited sites. The Pro plan ($19/month) adds badge removal, 30-day analytics with CSV export, custom difficulty, and IP rules.
 
 = Does Crovly use cookies? =
 
@@ -133,6 +133,14 @@ Yes. The widget script is automatically tagged with `data-cfasync="false"` to pr
 
 == Changelog ==
 
+= 1.0.2 =
+* Added data-fallback="open" for HA fail-open behavior
+* Updated docs links and widget size references
+* Synced readme.txt stable tag
+
+= 1.0.1 =
+* XSS sanitization hardening
+
 = 1.0.0 =
 * Initial release
 * 22+ form integrations — all free, no premium gating
@@ -150,6 +158,12 @@ Yes. The widget script is automatically tagged with `data-cfasync="false"` to pr
 * Emergency lockout recovery via CROVLY_DISABLE constant
 
 == Upgrade Notice ==
+
+= 1.0.2 =
+Widget size and docs link updates. Recommended update.
+
+= 1.0.1 =
+Security hardening. Recommended update.
 
 = 1.0.0 =
 Initial release of Crovly — privacy-first Proof of Work captcha for WordPress.

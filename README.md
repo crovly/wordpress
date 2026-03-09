@@ -58,7 +58,7 @@ All integrations are free — no premium gating.
 - **Shortcode** — `[crovly]` or `[crovly theme="dark"]`
 - **PHP functions** — `crovly_render()` and `crovly_verify()`
 - **Fail-open** — Users are never locked out if the API is unreachable
-- **Lightweight** — Widget is under 4KB gzipped
+- **Lightweight** — Widget is under 25KB gzipped, 42 languages built-in
 
 ## Custom Forms
 
