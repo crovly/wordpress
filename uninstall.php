@@ -28,17 +28,17 @@ $crovly_options = [
 ];
 
 if (is_multisite()) {
-    $sites = get_sites(['fields' => 'ids', 'number' => 0]);
-    foreach ($sites as $blog_id) {
-        switch_to_blog($blog_id);
-        foreach ($crovly_options as $option) {
-            delete_option($option);
+    $crovly_sites = get_sites(['fields' => 'ids', 'number' => 0]);
+    foreach ($crovly_sites as $crovly_blog_id) {
+        switch_to_blog($crovly_blog_id);
+        foreach ($crovly_options as $crovly_option) {
+            delete_option($crovly_option);
         }
         restore_current_blog();
     }
 } else {
-    foreach ($crovly_options as $option) {
-        delete_option($option);
+    foreach ($crovly_options as $crovly_option) {
+        delete_option($crovly_option);
     }
 }
 

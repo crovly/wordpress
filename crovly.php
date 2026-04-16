@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name: Crovly
- * Plugin URI: https://crovly.com
+ * Plugin URI: https://docs.crovly.com/platforms/wordpress
  * Description: Privacy-first, Proof of Work captcha for WordPress. 22+ integrations: login, registration, comments, Contact Form 7, WPForms, Gravity Forms, Elementor, Ninja Forms, Fluent Forms, Formidable, Forminator, WooCommerce, BuddyPress, bbPress, Ultimate Member, MemberPress, Divi, Easy Digital Downloads, Mailchimp, GiveWP, and more. All free — no premium gating.
- * Version: 1.0.3
+ * Version: 1.0.4
  * Author: Crovly
  * Author URI: https://crovly.com
  * License: GPLv2 or later
@@ -11,7 +11,7 @@
  * Text Domain: crovly
  * Domain Path: /languages
  * Requires at least: 5.8
- * Tested up to: 6.7
+ * Tested up to: 6.9
  * Requires PHP: 7.4
  */
 
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('CROVLY_VERSION', '1.0.3');
+define('CROVLY_VERSION', '1.0.4');
 define('CROVLY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CROVLY_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -41,11 +41,6 @@ class Crovly_Plugin {
     private function __construct() {
         $this->site_key = defined('CROVLY_SITE_KEY') ? CROVLY_SITE_KEY : get_option('crovly_site_key', '');
         $this->secret_key = defined('CROVLY_SECRET_KEY') ? CROVLY_SECRET_KEY : get_option('crovly_secret_key', '');
-
-        // i18n
-        add_action('init', function () {
-            load_plugin_textdomain('crovly', false, dirname(plugin_basename(__FILE__)) . '/languages');
-        });
 
         // Admin
         add_action('admin_menu', [$this, 'add_settings_page']);
@@ -146,6 +141,9 @@ class Crovly_Plugin {
         if (defined('CROVLY_DISABLE') && CROVLY_DISABLE) return true;
         if ($this->should_skip()) return true;
 
+        // Captcha token is verified against the Crovly API (with IP binding), not a WP nonce.
+        // The parent form (login, comment, WooCommerce, etc.) handles its own nonce.
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
         $token = isset($_POST['crovly-token']) ? sanitize_text_field(wp_unslash($_POST['crovly-token'])) : '';
         if (empty($token)) return false;
 
@@ -191,6 +189,8 @@ class Crovly_Plugin {
     public function activation_redirect() {
         if (get_transient('crovly_activation_redirect')) {
             delete_transient('crovly_activation_redirect');
+            // Just checking presence of WP core query arg, no value used.
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             if (!isset($_GET['activate-multi'])) {
                 wp_safe_redirect(admin_url('options-general.php?page=crovly'));
                 exit;
@@ -907,7 +907,7 @@ class Crovly_Plugin {
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
                 <?php esc_html_e('Crovly Settings', 'crovly'); ?>
             </h1>
-            <p><?php echo wp_kses(__('Privacy-first captcha powered by Proof of Work. Get your keys at <a href="https://app.crovly.com" target="_blank">app.crovly.com</a>.', 'crovly'), ['a' => ['href' => [], 'target' => []]]); ?></p>
+            <p><?php echo wp_kses(__('Privacy-first captcha powered by Proof of Work. Get your keys at <a href="https://app.crovly.com" target="_blank" rel="noopener">app.crovly.com</a>.', 'crovly'), ['a' => ['href' => [], 'target' => [], 'rel' => []]]); ?></p>
 
             <form method="post" action="options.php">
                 <?php settings_fields('crovly_settings'); ?>
@@ -916,11 +916,11 @@ class Crovly_Plugin {
                 <table class="form-table">
                     <tr>
                         <th><label for="crovly_site_key"><?php esc_html_e('Site Key', 'crovly'); ?></label></th>
-                        <td><input type="text" id="crovly_site_key" name="crovly_site_key" value="<?php echo esc_attr($site_key); ?>" class="regular-text" placeholder="crvl_site_..." <?php if (defined('CROVLY_SITE_KEY') || defined('CROVLY_SECRET_KEY')) echo esc_attr('readonly'); ?> /></td>
+                        <td><input type="text" id="crovly_site_key" name="crovly_site_key" value="<?php echo esc_attr($site_key); ?>" class="regular-text" placeholder="crvl_site_..." <?php if (defined('CROVLY_SITE_KEY') || defined('CROVLY_SECRET_KEY')) echo 'readonly'; ?> /></td>
                     </tr>
                     <tr>
                         <th><label for="crovly_secret_key"><?php esc_html_e('Secret Key', 'crovly'); ?></label></th>
-                        <td><input type="password" id="crovly_secret_key" name="crovly_secret_key" value="<?php echo esc_attr($secret_key); ?>" class="regular-text" placeholder="crvl_secret_..." <?php if (defined('CROVLY_SITE_KEY') || defined('CROVLY_SECRET_KEY')) echo esc_attr('readonly'); ?> /></td>
+                        <td><input type="password" id="crovly_secret_key" name="crovly_secret_key" value="<?php echo esc_attr($secret_key); ?>" class="regular-text" placeholder="crvl_secret_..." <?php if (defined('CROVLY_SITE_KEY') || defined('CROVLY_SECRET_KEY')) echo 'readonly'; ?> /></td>
                     </tr>
                     <tr>
                         <th></th>

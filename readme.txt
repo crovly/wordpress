@@ -2,8 +2,8 @@
 Contributors: crovly
 Tags: captcha, spam, security, proof of work, bot protection
 Requires at least: 5.8
-Tested up to: 6.7
-Stable tag: 1.0.3
+Tested up to: 6.9
+Stable tag: 1.0.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -60,6 +60,31 @@ Crovly is a privacy-first captcha service powered by Proof of Work. Unlike tradi
 **Shortcode & PHP support:**
 
 Use `[crovly]` shortcode in any page or post, or call `crovly_render()` and `crovly_verify()` in your theme templates.
+
+== External services ==
+
+This plugin relies on the Crovly captcha service to function. It connects to two external endpoints:
+
+**1. Crovly Widget CDN (get.crovly.com)**
+
+The plugin loads the JavaScript widget from `https://get.crovly.com/widget.js` on any page that contains a protected form. The widget runs Proof of Work in the visitor's browser and collects a hashed browser fingerprint.
+
+* **When:** Loaded on frontend pages that display a protected form (login, register, comment, checkout, etc.)
+* **What is sent:** Standard HTTP request headers (IP address, user agent). No personal data.
+* **Terms of Service:** [https://crovly.com/terms](https://crovly.com/terms)
+* **Privacy Policy:** [https://crovly.com/privacy](https://crovly.com/privacy)
+
+**2. Crovly Verification API (api.crovly.com)**
+
+When a visitor submits a protected form, the plugin sends the generated captcha token to `https://api.crovly.com/verify-token` for server-side verification.
+
+* **When:** On form submission of any form protected by Crovly.
+* **What is sent:** The captcha token (opaque string), the visitor's IP address (for IP binding), and your Secret Key (for authentication).
+* **What is received:** A success/failure response indicating whether the token is valid.
+* **Terms of Service:** [https://crovly.com/terms](https://crovly.com/terms)
+* **Privacy Policy:** [https://crovly.com/privacy](https://crovly.com/privacy)
+
+Both services are operated by Crovly. No data is shared with third parties. The plugin does not set cookies or track visitors across sites.
 
 == Installation ==
 
@@ -133,6 +158,11 @@ Yes. The widget script is automatically tagged with `data-cfasync="false"` to pr
 
 == Changelog ==
 
+= 1.0.4 =
+* Added "External services" disclosure section per WordPress.org requirements
+* Added rel="noopener" to external links
+* Updated "Tested up to" to WordPress 6.8
+
 = 1.0.3 =
 * Widget i18n: 42 languages with automatic browser language detection
 * Updated docs URL structure (SDKs and Platforms separation)
@@ -162,6 +192,9 @@ Yes. The widget script is automatically tagged with `data-cfasync="false"` to pr
 * Emergency lockout recovery via CROVLY_DISABLE constant
 
 == Upgrade Notice ==
+
+= 1.0.4 =
+External services disclosure and minor fixes. Recommended update.
 
 = 1.0.3 =
 42-language widget support. Recommended update.
