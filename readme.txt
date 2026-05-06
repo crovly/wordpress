@@ -3,7 +3,7 @@ Contributors: crovly
 Tags: captcha, spam, security, proof of work, bot protection
 Requires at least: 5.8
 Tested up to: 6.9
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -23,12 +23,12 @@ Crovly is a privacy-first captcha service powered by Proof of Work. Unlike tradi
 
 **Key features:**
 
-* **Privacy-first** — No cookies, no tracking, fully GDPR compliant
-* **No image puzzles** — Invisible to legitimate users, no "select all buses"
-* **AI-resistant** — Proof of Work can't be bypassed by vision AI
-* **IP binding** — Tokens are bound to the solver's IP, preventing human farms
-* **Adaptive difficulty** — Suspicious visitors get harder challenges
-* **22+ integrations** — Works with all major WordPress plugins out of the box
+* **Privacy-friendly** — No cookies, no cross-site tracking
+* **No image puzzles** — Invisible to legitimate users
+* **Resistant to AI vision attacks** — Proof of Work cannot be solved by image recognition
+* **IP binding** — Tokens are bound to the solver's IP address
+* **Adaptive difficulty** — Suspicious visitors receive harder challenges
+* **22+ integrations** — Works with major WordPress form plugins
 * **Lightweight** — Widget is under 25KB gzipped, zero dependencies, 42 languages
 
 **Supported integrations:**
@@ -91,7 +91,7 @@ Both services are operated by Crovly. No data is shared with third parties. The 
 1. Upload the `crovly` folder to `/wp-content/plugins/`
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Go to Settings > Crovly
-4. Enter your Site Key and Secret Key from [app.crovly.com](https://app.crovly.com)
+4. Enter your Site Key and Secret Key (obtained from the Crovly service dashboard)
 5. Select which forms to protect
 6. Done! Your forms are now protected
 
@@ -99,19 +99,15 @@ Both services are operated by Crovly. No data is shared with third parties. The 
 
 = Where do I get my API keys? =
 
-Sign up for a free account at [app.crovly.com](https://app.crovly.com). Create a site and you'll receive a Site Key (public) and Secret Key (private).
-
-= Is Crovly free? =
-
-Yes! The free plan includes unlimited verifications and unlimited sites. The Pro plan ($19/month) adds badge removal, 30-day analytics with CSV export, custom difficulty, and IP rules.
+Sign up for an account at the Crovly service. Create a site and you will receive a Site Key (public) and a Secret Key (private). See the External services section above for the service URL.
 
 = Does Crovly use cookies? =
 
 No. Crovly does not set any cookies and does not track users across sites.
 
-= Is Crovly GDPR compliant? =
+= How does Crovly handle user data? =
 
-Yes. Crovly collects only a hashed browser fingerprint (not reversible to personal data) and does not use cookies or cross-site tracking.
+Crovly only transmits a hashed browser fingerprint and the visitor's IP address (used for IP binding to prevent token replay). No personal data is stored. See the External services section for full details.
 
 = What happens if the Crovly API is unreachable? =
 
@@ -154,9 +150,14 @@ Yes. The widget script is automatically tagged with `data-cfasync="false"` to pr
 
 1. Settings page — API keys, theme, and form selection
 2. Protected login form with Crovly widget
-3. Dashboard at app.crovly.com showing verification analytics
+3. Crovly service dashboard showing verification analytics
 
 == Changelog ==
+
+= 1.0.5 =
+* Removed promotional language and pricing references per WordPress.org guidelines
+* Reduced external links in description (kept only in External services section)
+* Reworded compliance claims to be more accurate
 
 = 1.0.4 =
 * Added "External services" disclosure section per WordPress.org requirements
@@ -177,7 +178,7 @@ Yes. The widget script is automatically tagged with `data-cfasync="false"` to pr
 
 = 1.0.0 =
 * Initial release
-* 22+ form integrations — all free, no premium gating
+* 22+ form integrations
 * Proof of Work captcha with adaptive difficulty
 * Browser fingerprint and headless detection
 * Behavioral analysis (mouse, keyboard, scroll, touch)
@@ -192,6 +193,9 @@ Yes. The widget script is automatically tagged with `data-cfasync="false"` to pr
 * Emergency lockout recovery via CROVLY_DISABLE constant
 
 == Upgrade Notice ==
+
+= 1.0.5 =
+Guideline compliance update. Recommended.
 
 = 1.0.4 =
 External services disclosure and minor fixes. Recommended update.
