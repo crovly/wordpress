@@ -25,6 +25,7 @@ $crovly_options = [
     'crovly_ip_allowlist',
     'crovly_enabled_forms',
     'crovly_delete_data',
+    'crovly_show_badge',
 ];
 
 if (is_multisite()) {

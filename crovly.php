@@ -3,7 +3,7 @@
  * Plugin Name: Crovly
  * Plugin URI: https://docs.crovly.com/platforms/wordpress
  * Description: Privacy-friendly, Proof of Work captcha for WordPress. Integrates with WordPress core forms and 20+ popular form plugins.
- * Version: 1.0.5
+ * Version: 1.0.6
  * Author: Crovly
  * Author URI: https://crovly.com
  * License: GPLv2 or later
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('CROVLY_VERSION', '1.0.5');
+define('CROVLY_VERSION', '1.0.6');
 define('CROVLY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CROVLY_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -48,6 +48,7 @@ class Crovly_Plugin {
         add_filter('plugin_action_links_' . plugin_basename(__FILE__), [$this, 'add_settings_link']);
         add_action('admin_init', [$this, 'activation_redirect']);
         add_action('admin_notices', [$this, 'admin_notice_keys']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
         add_action('wp_ajax_crovly_test_connection', [$this, 'ajax_test_connection']);
 
         // Cloudflare Rocket Loader compat
@@ -108,10 +109,16 @@ class Crovly_Plugin {
         $this->widget_loaded = true;
     }
 
-    private static $kses_allowed = ['div' => ['id' => [], 'class' => [], 'data-site-key' => [], 'data-theme' => [], 'data-fallback' => [], 'style' => []]];
+    private static $kses_allowed = ['div' => ['id' => [], 'class' => [], 'data-site-key' => [], 'data-theme' => [], 'data-fallback' => [], 'data-badge' => [], 'style' => []]];
 
     public function render_widget() {
         echo wp_kses($this->get_widget_html(), self::$kses_allowed);
+    }
+
+    private function badge_attr() {
+        // Per WordPress.org guideline 10: external credit must be opt-in by user.
+        // Default: badge hidden. User can enable in Settings > Crovly.
+        return get_option('crovly_show_badge', '0') === '1' ? '' : ' data-badge="false"';
     }
 
     public function get_widget_html($extra_attrs = '') {
@@ -121,7 +128,7 @@ class Crovly_Plugin {
         $theme = get_option('crovly_theme', 'auto');
         // Sanitize extra_attrs: strip tags and only allow safe attribute patterns
         $safe_extra = $extra_attrs ? ' ' . wp_kses_no_null(wp_strip_all_tags($extra_attrs)) : '';
-        return '<div id="' . esc_attr($id) . '" class="crovly-captcha" data-site-key="' . esc_attr($this->site_key) . '" data-theme="' . esc_attr($theme) . '" data-fallback="open"' . $safe_extra . ' style="margin:10px 0"></div>';
+        return '<div id="' . esc_attr($id) . '" class="crovly-captcha" data-site-key="' . esc_attr($this->site_key) . '" data-theme="' . esc_attr($theme) . '" data-fallback="open"' . $this->badge_attr() . $safe_extra . ' style="margin:10px 0"></div>';
     }
 
     public function shortcode_widget($atts) {
@@ -130,7 +137,7 @@ class Crovly_Plugin {
         $this->widget_counter++;
         $id = 'crovly-captcha-' . $this->widget_counter;
         $theme = $atts['theme'] ?: get_option('crovly_theme', 'auto');
-        return '<div id="' . esc_attr($id) . '" class="crovly-captcha" data-site-key="' . esc_attr($this->site_key) . '" data-theme="' . esc_attr($theme) . '" data-fallback="open" style="margin:10px 0"></div>';
+        return '<div id="' . esc_attr($id) . '" class="crovly-captcha" data-site-key="' . esc_attr($this->site_key) . '" data-theme="' . esc_attr($theme) . '" data-fallback="open"' . $this->badge_attr() . ' style="margin:10px 0"></div>';
     }
 
     // ═══════════════════════════════════════
@@ -887,6 +894,11 @@ class Crovly_Plugin {
                 return $value ? '1' : '0';
             }
         ]);
+        register_setting('crovly_settings', 'crovly_show_badge', [
+            'sanitize_callback' => function ($value) {
+                return $value ? '1' : '0';
+            }
+        ]);
     }
 
     public function render_settings_page() {
@@ -995,6 +1007,16 @@ class Crovly_Plugin {
                         </td>
                     </tr>
                     <tr>
+                        <th><?php esc_html_e('Show service badge', 'crovly'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="crovly_show_badge" value="1" <?php checked(get_option('crovly_show_badge', '0'), '1'); ?> />
+                                <?php esc_html_e('Display the "Protected by Crovly" badge on protected forms.', 'crovly'); ?>
+                            </label>
+                            <p class="description"><?php esc_html_e('Off by default. Enable only if you wish to show a credit link to the captcha service on your public pages.', 'crovly'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th><?php esc_html_e('Delete data on uninstall', 'crovly'); ?></th>
                         <td>
                             <label>
@@ -1034,31 +1056,25 @@ class Crovly_Plugin {
 
                 <?php submit_button(); ?>
             </form>
-            <script>
-            document.getElementById('crovly-test-btn').addEventListener('click', function() {
-                var btn = this, res = document.getElementById('crovly-test-result');
-                btn.disabled = true;
-                res.textContent = '<?php echo esc_js(__('Testing...', 'crovly')); ?>';
-                res.style.color = '#666';
-                var fd = new FormData();
-                fd.append('action', 'crovly_test_connection');
-                fd.append('nonce', '<?php echo esc_js(wp_create_nonce('crovly_test_connection')); ?>');
-                fetch(ajaxurl, {method:'POST', body:fd})
-                    .then(function(r){return r.json()})
-                    .then(function(r){
-                        res.textContent = r.data.message;
-                        res.style.color = r.success ? '#00a32a' : '#d63638';
-                        btn.disabled = false;
-                    })
-                    .catch(function(){
-                        res.textContent = '<?php echo esc_js(__('Request failed.', 'crovly')); ?>';
-                        res.style.color = '#d63638';
-                        btn.disabled = false;
-                    });
-            });
-            </script>
         </div>
         <?php
+    }
+
+    public function enqueue_admin_assets($hook) {
+        if ($hook !== 'settings_page_crovly') return;
+        wp_enqueue_script(
+            'crovly-admin-settings',
+            CROVLY_PLUGIN_URL . 'assets/js/admin-settings.js',
+            [],
+            CROVLY_VERSION,
+            true
+        );
+        wp_localize_script('crovly-admin-settings', 'crovlyAdmin', [
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce'   => wp_create_nonce('crovly_test_connection'),
+            'testing' => __('Testing...', 'crovly'),
+            'failed'  => __('Request failed.', 'crovly'),
+        ]);
     }
 }
 

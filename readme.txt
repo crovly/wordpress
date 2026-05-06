@@ -3,7 +3,7 @@ Contributors: crovly
 Tags: captcha, spam, security, proof of work, bot protection
 Requires at least: 5.8
 Tested up to: 6.9
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -154,6 +154,11 @@ Yes. The widget script is automatically tagged with `data-cfasync="false"` to pr
 
 == Changelog ==
 
+= 1.0.6 =
+* Inline admin script moved to enqueued asset file (wp_enqueue_script)
+* Service badge is now opt-in (off by default) per WordPress.org guideline 10
+* Added "Show service badge" setting under Advanced
+
 = 1.0.5 =
 * Removed promotional language and pricing references per WordPress.org guidelines
 * Reduced external links in description (kept only in External services section)
@@ -193,6 +198,9 @@ Yes. The widget script is automatically tagged with `data-cfasync="false"` to pr
 * Emergency lockout recovery via CROVLY_DISABLE constant
 
 == Upgrade Notice ==
+
+= 1.0.6 =
+Compliance update: opt-in service badge, enqueued admin script.
 
 = 1.0.5 =
 Guideline compliance update. Recommended.
