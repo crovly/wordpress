@@ -1,4 +1,4 @@
-=== Crovly ===
+=== Crovly – Proof of Work Captcha & Spam Protection ===
 Contributors: crovly
 Tags: captcha, spam, security, proof of work, bot protection
 Requires at least: 5.8

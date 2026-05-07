@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Crovly
+ * Plugin Name: Crovly – Proof of Work Captcha & Spam Protection
  * Plugin URI: https://docs.crovly.com/platforms/wordpress
  * Description: Privacy-friendly, Proof of Work captcha for WordPress. Integrates with WordPress core forms and 20+ popular form plugins.
  * Version: 1.0.6
